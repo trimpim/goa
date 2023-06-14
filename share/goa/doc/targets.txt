@@ -16,8 +16,8 @@ linux
 =====
 
 This target uses base-linux to execute the project on top of the running Linux
-kernel. The 'linux' target evaluates the following services mentioned in the
-_runtime_ file's <requires> node:
+kernel. The 'linux' target evaluates the following services mentioned in
+the _runtime_ file's <requires> node:
 
 :<event/>:
   Any required _Event_ service is routed to a nitpicker component.
@@ -78,8 +78,8 @@ _runtime_ file's <requires> node:
   Any required _Uplink_ service is routed to a black-hole component.
 
 
-The 'linux' target evaluates the following services mentioned in the _runtime_
-file's <provides> node:
+The 'linux' target evaluates the following services mentioned in
+the _runtime_ file's <provides> node:
 
 :<uplink label="<tap-name>"/>:
   For the first provided _Uplink_ service a linux_nic_drv component is added to
