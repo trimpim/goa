@@ -65,8 +65,8 @@ proc _validate_init_config { config &required_services &provided_services } {
 		if {[lsearch -exact [list rom pd cpu log] $parent_service] > -1} { continue }
 
 		if {[lsearch -nocase [array names required_services] $parent_service] == -1} {
-			log "config mentions $parent_service service as parent provided" \
-			    "but runtime lacks corresponding requirement"
+			log "config <parent-provides> mentions a $parent_service service;" \
+			    "consider adding <$parent_service/> as a required runtime service"
 		}
 }
 
@@ -91,7 +91,7 @@ proc _validate_init_config { config &required_services &provided_services } {
 	# check that services mentioned/routed in config are provided
 	foreach service $services_from_config {
 		if {[lsearch -exact $checked_provided_services $service] == -1} {
-			exit_with_error "runtime does not provide <$service/> as specified by config" }
+			exit_with_error "runtime does not provide <$service/> as indicated by config" }
 	}
 }
 
