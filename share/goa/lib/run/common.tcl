@@ -268,7 +268,9 @@ proc generate_runtime_config { runtime_file &runtime_archives &rom_modules } {
 
 
 		} else {
-			log "runtime-declared <$service/> requirement is not supported" }
+			foreach service_node $required_services($service) {
+				log "runtime-declared $service_node requirement is not supported" }
+		}
 	}
 
 	if {$blackhole_config != ""} {
