@@ -62,7 +62,7 @@ proc _validate_init_config { config &required_services &provided_services } {
 
 	# check that all parent_provides services are base services or required services
 	foreach parent_service $parent_provides {
-		if {[lsearch -exact [list rom pd cpu log] $parent_service] > -1} { continue }
+		if {[lsearch -exact [list rom pd cpu log rm] $parent_service] > -1} { continue }
 
 		if {[lsearch -nocase [array names required_services] $parent_service] == -1} {
 			log "config <parent-provides> mentions a $parent_service service;" \
@@ -175,11 +175,11 @@ proc generate_runtime_config { runtime_file &runtime_archives &rom_modules } {
 	lassign [_acquire_config $runtime_file] config config_route
 
 	# list of services that are do not need to mentioned as requirement
-	set base_services   [list CPU PD LOG]
+	set base_services   [list CPU PD LOG RM]
 
 	# remaining services
 	set other_services [list Audio_in Audio_out Uplink Nic Capture Event Gui TRACE \
-	                         Block Platform IO_MEM IO_PORT IRQ File_system Timer RM \
+	                         Block Platform IO_MEM IO_PORT IRQ File_system Timer \
 	                         Rtc Gpu Report ROM Usb Terminal VM Pin_ctrl Pin_state]
 
 	# all known services
