@@ -24,7 +24,12 @@ if {$targeted_dir != ""} {
 ##
 # Return 1 if directory is considered as goa project
 #
-proc looks_like_goa_project_dir { dir } {
+proc looks_like_goa_project_dir { dir { fail_silent 0 } } {
+
+	proc fail { fail_silent args } {
+		if { $fail_silent } { return -level 2 0 }
+		exit_with_error [join $args { }]
+	}
 
 	# no project if neither 'src/' nor 'import' nor 'pkg/' nor 'raw/' exists
 	set ingredient 0
@@ -32,20 +37,22 @@ proc looks_like_goa_project_dir { dir } {
 		if {[file exists $dir/$name]} {
 			set ingredient 1 } }
 	if {!$ingredient} {
-		return 0 }
+		fail $fail_silent "$dir does not look like a goa project" }
 
 	# no project if 'import' is anything other than a file
 	if {[file exists $dir/import] && ![file isfile $dir/import]} {
-		return 0 }
+		fail $fail_silent "$dir/import is not a file" }
 
 	# no project if 'src/' or 'pkg/' or 'raw/' is anything other than a directory
 	foreach name [list src pkg raw] {
 		if {[file exists $dir/$name] && ![file isdirectory $dir/$name]} {
-			return 0 } }
+			fail $fail_silent "$dir/$name is not a directory" } }
 
 	# no project if 'src/' exists but there is no 'artifacts' file
 	if {[file exists $dir/src] && ![file isfile $dir/artifacts]} {
-		return 0}
+		fail $fail_silent "The project $dir has a 'src' directory but" \
+			               "lacks an 'artifacts' file." \
+			               "You may start with an empty file." }
 
 	return 1
 }
@@ -78,7 +85,7 @@ proc goa_project_dirs { } {
 	set project_dirs { }
 	foreach dir $project_candidates {
 
-		if {[looks_like_goa_project_dir $dir]} {
+		if {[looks_like_goa_project_dir $dir 1]} {
 			lappend project_dirs $dir }
 	}
 
