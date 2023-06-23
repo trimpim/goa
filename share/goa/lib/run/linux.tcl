@@ -206,6 +206,33 @@ proc bind_required_services { &services } {
 	}
 
 	##
+	# instantiate external ROMs if required by runtime
+	if {[info exists services(rom)]} {
+		set start_roms_provider 0
+		foreach rom_node $services(rom) {
+			variable label_node label
+
+			set label_node [query_from_string string(*/@label) $rom_node  ""]
+
+			# here we only handle ROMs with a label
+			if {$label_node == ""} { continue }
+
+			set label [lindex [split [split $label_node "="] "\""] 0]
+
+			append routes "\n\t\t\t\t\t" \
+			              "<service name=\"ROM\" label=\"$label\"> " \
+			              "<child name=\"roms\"/> " \
+			              "</service>"
+
+			_instantiate_roms_provider start_nodes archives modules start_roms_provider
+		}
+
+		global run_dir var_dir
+		# link all file systems to run_dir
+		file link -symbolic "$run_dir/roms" "$var_dir/roms"
+	}
+
+	##
 	# instantiate report_rom for if clipboard Report or ROM required by runtime
 	set clipboard_rom_node ""
 	set clipboard_report_node ""
@@ -524,6 +551,62 @@ proc _instantiate_file_system { name label writeable &start_nodes &archives &mod
 	lappend modules lx_fs
 
 	lappend archives "$run_as/src/lx_fs"
+}
+
+
+proc _instantiate_roms_provider { &start_nodes &archives &modules &start_roms_provider } {
+	upvar 1 ${&start_nodes} start_nodes
+	upvar 1 ${&archives} archives
+	upvar 1 ${&modules} modules
+	upvar 1 ${&start_roms_provider} start_roms_provider
+
+	global run_as var_dir
+
+	if {$start_roms_provider == 1} { return }
+
+	append start_nodes {
+		<start name="roms_fs" ld="no" caps="100">
+			<binary name="lx_fs"/>
+			<resource name="RAM" quantum="1M"/>
+			<provides> <service name="File_system"/> </provides>
+			<config>
+				<default-policy root="/roms" writeable="no"/>
+			</config>
+			<route>
+				<service name="CPU"> <parent/> </service>
+				<service name="LOG"> <parent/> </service>
+				<service name="PD">  <parent/> </service>
+				<service name="ROM"> <parent/> </service>
+			</route>
+		</start>
+		<start name="roms" caps="100">
+			<binary name="fs_rom"/>
+			<resource name="RAM" quantum="1M"/>
+			<provides> <service name="ROM"/> </provides>
+			<config/>
+			<route>
+				<service name="File_system"> <child name="roms_fs"/> </service>
+				<service name="CPU"> <parent/> </service>
+				<service name="LOG"> <parent/> </service>
+				<service name="PD">  <parent/> </service>
+				<service name="ROM"> <parent/> </service>
+			</route>
+		</start>
+	}
+
+	set start_roms_provider 1
+
+	# create folder in var_dir
+	set fs_dir "$var_dir/roms"
+	if {![file isdirectory $fs_dir]} {
+		log "creating file-system directory $fs_dir"
+		file mkdir $fs_dir
+	}
+
+	lappend modules fs_rom lx_fs
+
+	lappend archives $run_as/src/fs_rom
+	lappend archives $run_as/src/lx_fs
 }
 
 
