@@ -146,7 +146,7 @@ proc bind_required_services { &services } {
 				append routes "\n\t\t\t\t\t" \
 					{<service name="Nic" label="} $nic_label {"> <child name="} $router_name {"/> </service>}
 
-				_instantiate_network $nic_label $router_name $subnet_id start_nodes archives modules
+				_instantiate_network tap_$nic_label $router_name $subnet_id start_nodes archives modules
 			} else {
 				append routes "\n\t\t\t\t\t" \
 					{<service name="Nic"> <child name="nic_router"/> </service>}
