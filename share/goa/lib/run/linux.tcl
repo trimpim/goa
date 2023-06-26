@@ -132,16 +132,31 @@ proc bind_required_services { &services } {
 	##
 	# instantiate NIC router and driver if required by runtime
 	if {[info exists services(nic)]} {
-		if {[llength ${services(nic)}] > 1} {
-			log "Ignoring all but the first <nic/> requirement." }
+		set nic_services_unique [lsort -unique ${services(nic)}]
+		if {[llength ${services(nic)}] != [llength $nic_services_unique]} {
+			log "Ignoring duplicate <nic/> requirements" }
 
-		set nic_node [lindex ${services(nic)} 0]
-		set nic_label [query_from_string string(/nic/@label) $nic_node ""]
+		set subnet_id 10
+		foreach nic_node $nic_services_unique {
+			set nic_label [query_from_string string(/nic/@label) $nic_node ""]
 
-		append routes "\n\t\t\t\t\t" \
-			{<service name="Nic"> <child name="nic_router"/> </service>}
+			if { $nic_label != "" } {
+				set router_name "nic_router_$nic_label"
 
-		_instantiate_network $nic_label start_nodes archives modules
+				append routes "\n\t\t\t\t\t" \
+					{<service name="Nic" label="} $nic_label {"> <child name="} $router_name {"/> </service>}
+
+				_instantiate_network $nic_label $router_name $subnet_id start_nodes archives modules
+			} else {
+				append routes "\n\t\t\t\t\t" \
+					{<service name="Nic"> <child name="nic_router"/> </service>}
+
+				_instantiate_network "" "nic_router" $subnet_id start_nodes archives modules
+			}
+			incr subnet_id
+			if {$subnet_id > 255} {
+				exit_with_error "Too many <nic/> requirements" }
+		}
 
 		unset services(nic)
 	}
@@ -372,7 +387,7 @@ proc _instantiate_nitpicker { &start_nodes &archives &modules } {
 }
 
 
-proc _instantiate_network { nic_label &start_nodes &archives &modules } {
+proc _instantiate_network { tap_name router_name subnet_id &start_nodes &archives &modules } {
 	upvar 1 ${&start_nodes} start_nodes
 	upvar 1 ${&archives} archives
 	upvar 1 ${&modules} modules
@@ -384,18 +399,18 @@ proc _instantiate_network { nic_label &start_nodes &archives &modules } {
 				<binary name="linux_nic_drv"/>
 				<resource name="RAM" quantum="4M"/>
 				<provides> <service name="Nic"/> </provides>}
-	if {$nic_label != ""} {
+	if {$tap_name != ""} {
 		append start_nodes {
-				<config tap="} $nic_label {"/>}
+				<config tap="} $tap_name {"/>}
 	}
 	append start_nodes {
 				<route>
-					<service name="Uplink"> <child name="nic_router"/> </service>
+					<service name="Uplink"> <child name="} $router_name {"/> </service>
 					<any-service> <parent/> </any-service>
 				</route>
 			</start>
 
-			<start name="nic_router" caps="200">
+			<start name="} $router_name {" caps="200">
 				<resource name="RAM" quantum="10M"/>
 				<provides>
 					<service name="Uplink"/>
@@ -407,8 +422,8 @@ proc _instantiate_network { nic_label &start_nodes &archives &modules } {
 					<domain name="uplink">
 						<nat domain="default" tcp-ports="1000" udp-ports="1000" icmp-ids="1000"/>
 					</domain>
-					<domain name="default" interface="10.0.1.1/24">
-						<dhcp-server ip_first="10.0.1.2" ip_last="10.0.1.253"/>
+					<domain name="default" interface="10.0.} $subnet_id {.1/24">
+						<dhcp-server ip_first="10.0.} $subnet_id {.2" ip_last="10.0.} $subnet_id {.253"/>
 						<tcp dst="0.0.0.0/0">
 							<permit-any domain="uplink"/>
 						</tcp>
