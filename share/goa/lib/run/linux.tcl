@@ -141,17 +141,15 @@ proc bind_required_services { &services } {
 			set nic_label [query_from_string string(/nic/@label) $nic_node ""]
 
 			if { $nic_label != "" } {
-				set router_name "nic_router_$nic_label"
-
 				append routes "\n\t\t\t\t\t" \
-					{<service name="Nic" label="} $nic_label {"> <child name="} $router_name {"/> </service>}
+					{<service name="Nic" label="} $nic_label {"> <child name="nic_router_} $nic_label {"/> </service>}
 
-				_instantiate_network tap_$nic_label $router_name $subnet_id start_nodes archives modules
+				_instantiate_network $nic_label $subnet_id start_nodes archives modules
 			} else {
 				append routes "\n\t\t\t\t\t" \
 					{<service name="Nic"> <child name="nic_router"/> </service>}
 
-				_instantiate_network "" "nic_router" $subnet_id start_nodes archives modules
+				_instantiate_network "" $subnet_id start_nodes archives modules
 			}
 			incr subnet_id
 			if {$subnet_id > 255} {
@@ -387,15 +385,24 @@ proc _instantiate_nitpicker { &start_nodes &archives &modules } {
 }
 
 
-proc _instantiate_network { tap_name router_name subnet_id &start_nodes &archives &modules } {
+proc _instantiate_network { label subnet_id &start_nodes &archives &modules } {
 	upvar 1 ${&start_nodes} start_nodes
 	upvar 1 ${&archives} archives
 	upvar 1 ${&modules} modules
 
 	global run_as
 
+	set tap_name    tap0
+	set driver_name nic_drv
+	set router_name nic_router
+	if {$label != ""} {
+		set tap_name    tap_$label
+		set driver_name nic_drv_$label
+		set router_name nic_router_$label
+	}
+
 	append start_nodes {
-			<start name="nic_drv" caps="100" ld="no">
+			<start name="} $driver_name {" caps="100" ld="no">
 				<binary name="linux_nic_drv"/>
 				<resource name="RAM" quantum="4M"/>
 				<provides> <service name="Nic"/> </provides>}
@@ -411,6 +418,7 @@ proc _instantiate_network { tap_name router_name subnet_id &start_nodes &archive
 			</start>
 
 			<start name="} $router_name {" caps="200">
+				<binary name="nic_router"/>
 				<resource name="RAM" quantum="10M"/>
 				<provides>
 					<service name="Uplink"/>
