@@ -569,33 +569,33 @@ proc _instantiate_roms_provider { &start_nodes &archives &modules } {
 	global run_as var_dir
 
 	append start_nodes {
-		<start name="roms_fs" ld="no" caps="100">
-			<binary name="lx_fs"/>
-			<resource name="RAM" quantum="1M"/>
-			<provides> <service name="File_system"/> </provides>
-			<config>
-				<default-policy root="/roms" writeable="no"/>
-			</config>
-			<route>
-				<service name="CPU"> <parent/> </service>
-				<service name="LOG"> <parent/> </service>
-				<service name="PD">  <parent/> </service>
-				<service name="ROM"> <parent/> </service>
-			</route>
-		</start>
-		<start name="roms" caps="100">
-			<binary name="fs_rom"/>
-			<resource name="RAM" quantum="1M"/>
-			<provides> <service name="ROM"/> </provides>
-			<config/>
-			<route>
-				<service name="File_system"> <child name="roms_fs"/> </service>
-				<service name="CPU"> <parent/> </service>
-				<service name="LOG"> <parent/> </service>
-				<service name="PD">  <parent/> </service>
-				<service name="ROM"> <parent/> </service>
-			</route>
-		</start>
+			<start name="roms_fs" ld="no" caps="100">
+				<binary name="lx_fs"/>
+				<resource name="RAM" quantum="1M"/>
+				<provides> <service name="File_system"/> </provides>
+				<config>
+					<default-policy root="/roms" writeable="no"/>
+				</config>
+				<route>
+					<service name="CPU"> <parent/> </service>
+					<service name="LOG"> <parent/> </service>
+					<service name="PD">  <parent/> </service>
+					<service name="ROM"> <parent/> </service>
+				</route>
+			</start>
+			<start name="roms" caps="100">
+				<binary name="fs_rom"/>
+				<resource name="RAM" quantum="1M"/>
+				<provides> <service name="ROM"/> </provides>
+				<config/>
+				<route>
+					<service name="File_system"> <child name="roms_fs"/> </service>
+					<service name="CPU"> <parent/> </service>
+					<service name="LOG"> <parent/> </service>
+					<service name="PD">  <parent/> </service>
+					<service name="ROM"> <parent/> </service>
+				</route>
+			</start>
 	}
 
 	# create folder in var_dir
