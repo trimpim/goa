@@ -206,33 +206,6 @@ proc bind_required_services { &services } {
 	}
 
 	##
-	# instantiate external ROMs if required by runtime
-	if {[info exists services(rom)]} {
-		set start_roms_provider 0
-		foreach rom_node $services(rom) {
-			variable label_node label
-
-			set label_node [query_from_string string(*/@label) $rom_node  ""]
-
-			# here we only handle ROMs with a label
-			if {$label_node == ""} { continue }
-
-			set label [lindex [split [split $label_node "="] "\""] 0]
-
-			append routes "\n\t\t\t\t\t" \
-			              "<service name=\"ROM\" label=\"$label\"> " \
-			              "<child name=\"roms\"/> " \
-			              "</service>"
-
-			_instantiate_roms_provider start_nodes archives modules start_roms_provider
-		}
-
-		global run_dir var_dir
-		# link all file systems to run_dir
-		file link -symbolic "$run_dir/roms" "$var_dir/roms"
-	}
-
-	##
 	# instantiate report_rom for if clipboard Report or ROM required by runtime
 	set clipboard_rom_node ""
 	set clipboard_report_node ""
@@ -261,6 +234,37 @@ proc bind_required_services { &services } {
 
 	if {$clipboard_rom_node != "" || $clipboard_report_node != ""} {
 		_instantiate_clipboard start_nodes archives modules }
+
+	##
+	# instantiate external ROMs if required by runtime
+	if {[info exists services(rom)]} {
+		set provided_external_roms 0
+		foreach rom_node $services(rom) {
+			variable label_node label
+
+			set label_node [query_from_string string(*/@label) $rom_node  ""]
+
+			# here we only handle ROMs with a label
+			if {$label_node == ""} { continue }
+
+			set label [lindex [split [split $label_node "="] "\""] 0]
+
+			append routes "\n\t\t\t\t\t" \
+			              "<service name=\"ROM\" label=\"$label\"> " \
+			              "<child name=\"roms\"/> " \
+			              "</service>"
+			incr provided_external_roms
+		}
+
+		# only start one instance of the components
+		if {$provided_external_roms > 0} {
+			_instantiate_roms_provider start_nodes archives modules
+
+			# link the roms directory
+			global run_dir var_dir
+			file link -symbolic "$run_dir/roms" "$var_dir/roms"
+		}
+	}
 
 	return [list $start_nodes $routes $archives $modules ]
 }
@@ -554,15 +558,12 @@ proc _instantiate_file_system { name label writeable &start_nodes &archives &mod
 }
 
 
-proc _instantiate_roms_provider { &start_nodes &archives &modules &start_roms_provider } {
+proc _instantiate_roms_provider { &start_nodes &archives &modules } {
 	upvar 1 ${&start_nodes} start_nodes
 	upvar 1 ${&archives} archives
 	upvar 1 ${&modules} modules
-	upvar 1 ${&start_roms_provider} start_roms_provider
 
 	global run_as var_dir
-
-	if {$start_roms_provider == 1} { return }
 
 	append start_nodes {
 		<start name="roms_fs" ld="no" caps="100">
@@ -593,8 +594,6 @@ proc _instantiate_roms_provider { &start_nodes &archives &modules &start_roms_pr
 			</route>
 		</start>
 	}
-
-	set start_roms_provider 1
 
 	# create folder in var_dir
 	set fs_dir "$var_dir/roms"
