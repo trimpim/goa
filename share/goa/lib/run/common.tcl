@@ -305,11 +305,6 @@ proc generate_runtime_config { runtime_file &runtime_archives &rom_modules } {
 
 		} else {
 			foreach service_node $required_services($service) {
-
-				# <rom label=""/> nodes are handled by the external ROM access
-				set service_string [join $service_node " "]
-				if {[string match "<rom label=*/>" $service_string]} { continue }
-
 				log "runtime-declared $service_node requirement is not supported" }
 		}
 	}

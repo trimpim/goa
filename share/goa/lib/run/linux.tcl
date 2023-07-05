@@ -249,6 +249,9 @@ proc bind_required_services { &services } {
 
 			set label [lindex [split [split $label_node "="] "\""] 0]
 
+			set i [lsearch -regexp ${services(rom)} "label=\"$label\""]
+			set services(rom) [lreplace ${services(rom)} $i $i]
+
 			append routes "\n\t\t\t\t\t" \
 			              "<service name=\"ROM\" label=\"$label\"> " \
 			              "<child name=\"roms\"/> " \
