@@ -238,7 +238,7 @@ proc bind_required_services { &services } {
 	##
 	# instantiate external ROMs if required by runtime
 	if {[info exists services(rom)]} {
-		set provided_external_roms 0
+		set provided_external_rom 0
 		foreach rom_node $services(rom) {
 			variable label_node label
 
@@ -254,18 +254,18 @@ proc bind_required_services { &services } {
 
 			append routes "\n\t\t\t\t\t" \
 			              "<service name=\"ROM\" label=\"$label\"> " \
-			              "<child name=\"roms\"/> " \
+			              "<child name=\"rom\"/> " \
 			              "</service>"
-			incr provided_external_roms
+			incr provided_external_rom
 		}
 
 		# only start one instance of the components
-		if {$provided_external_roms > 0} {
-			_instantiate_roms_provider start_nodes archives modules
+		if {$provided_external_rom > 0} {
+			_instantiate_rom_provider start_nodes archives modules
 
-			# link the roms directory
+			# link the rom directory
 			global run_dir var_dir
-			file link -symbolic "$run_dir/roms" "$var_dir/roms"
+			file link -symbolic "$run_dir/rom" "$var_dir/rom"
 		}
 	}
 
@@ -561,7 +561,7 @@ proc _instantiate_file_system { name label writeable &start_nodes &archives &mod
 }
 
 
-proc _instantiate_roms_provider { &start_nodes &archives &modules } {
+proc _instantiate_rom_provider { &start_nodes &archives &modules } {
 	upvar 1 ${&start_nodes} start_nodes
 	upvar 1 ${&archives} archives
 	upvar 1 ${&modules} modules
@@ -574,7 +574,7 @@ proc _instantiate_roms_provider { &start_nodes &archives &modules } {
 				<resource name="RAM" quantum="1M"/>
 				<provides> <service name="File_system"/> </provides>
 				<config>
-					<default-policy root="/roms" writeable="no"/>
+					<default-policy root="/rom" writeable="no"/>
 				</config>
 				<route>
 					<service name="CPU"> <parent/> </service>
@@ -589,7 +589,7 @@ proc _instantiate_roms_provider { &start_nodes &archives &modules } {
 				<provides> <service name="ROM"/> </provides>
 				<config/>
 				<route>
-					<service name="File_system"> <child name="roms_fs"/> </service>
+					<service name="File_system"> <child name="rom_fs"/> </service>
 					<service name="CPU"> <parent/> </service>
 					<service name="LOG"> <parent/> </service>
 					<service name="PD">  <parent/> </service>
@@ -599,7 +599,7 @@ proc _instantiate_roms_provider { &start_nodes &archives &modules } {
 	}
 
 	# create folder in var_dir
-	set fs_dir "$var_dir/roms"
+	set fs_dir "$var_dir/rom"
 	if {![file isdirectory $fs_dir]} {
 		log "creating file-system directory $fs_dir"
 		file mkdir $fs_dir
