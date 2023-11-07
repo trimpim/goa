@@ -353,7 +353,6 @@ if {$perform(import)} {
 		set     cmd "make"
 		lappend cmd "-f" [file join $tool_dir ports mk install.mk]
 		lappend cmd "-C" $contrib_dir
-		lappend cmd "-j$jobs"
 		lappend cmd "-s"
 		lappend cmd "PORT=[file join $project_dir import]"
 		lappend cmd "REP_DIR=$project_dir"
