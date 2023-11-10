@@ -88,7 +88,7 @@ set     ldlibs_common { }
 lappend ldlibs_common -nostartfiles -nodefaultlibs -static-libgcc
 lappend ldlibs_common -L$abi_dir
 
-set     ldlibs_exe    { }
+set     ldlibs_exe   -Wl,--whole-archive
 lappend ldlibs_exe   -Wl,--dynamic-linker=ld.lib.so
 #
 # this is neeed so "main", "Component::construct" are dynamic symbols
@@ -97,9 +97,8 @@ lappend ldlibs_exe   -Wl,--dynamic-linker=ld.lib.so
 lappend ldlibs_exe    -Wl,--dynamic-list=[file join $ld_script_dir genode_dyn.dl]
 lappend ldlibs_exe    -T [file join $ld_script_dir genode_dyn.ld]
 
-set     ldlibs_so     { }
-lappend ldlibs_so     -Wl,-shared
-lappend ldlibs_so     -Wl,--whole-archive -l:ldso_so_support.lib.a -Wl,--no-whole-archive
+set     ldlibs_so     -Wl,-shared
+lappend ldlibs_so     -Wl,--whole-archive -l:ldso_so_support.lib.a
 lappend ldlibs_so     -T [file join $ld_script_dir genode_rel.ld]
 
 # determine ABIs to link against the executable
